@@ -10,7 +10,9 @@ public class JavaApplication {
 
   public static void main(String[] args) {
     IHouseService houseService = new HouseServiceImpl();
-    houseService.getHouse();
+//    houseService.getHouse();
 
+
+    houseService.getSaleArea("201702","201712");
   }
 }

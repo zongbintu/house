@@ -1,7 +1,13 @@
 package com.tu.house.service;
 
+import com.google.gson.GsonBuilder;
+import com.tu.house.api.SaleAreaApi;
 import com.tu.house.common.Constants;
 import com.tu.house.model.House;
+import com.tu.house.model.SaleArea;
+import com.tu.house.model.request.SaleAreaRequest;
+import com.tu.house.model.response.StatsExcel;
+import com.tu.house.model.response.StatsResult;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,6 +20,8 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.util.IOUtils;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -21,6 +29,10 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * @author Tu enum@foxmail.com.
@@ -39,6 +51,89 @@ public class HouseServiceImpl implements IHouseService {
 
     return null;
   }
+
+  @Override
+  public String getSaleArea(String startDate, String endDate) {
+    DateTime current = DateTime.parse(startDate, DateTimeFormat.forPattern("yyyyMM"));
+    final DateTime endTime = DateTime.parse(endDate, DateTimeFormat.forPattern("yyyyMM"));
+
+    while (!current.isAfter(endTime)) {
+      List<SaleArea> list = new ArrayList<>();
+      list.addAll(getSaleArea(current));
+      writeExcelSaleArea("src/main/resources/static/sale_area.xls", list);
+      current = current.plusMonths(1);
+    }
+    return null;
+  }
+
+  public String writeExcelSaleArea(String fileName, List<SaleArea> saleAreas) {
+    logger.info("文件{}开始写入", fileName);
+    try (POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(fileName))) {
+      Workbook workbook = new HSSFWorkbook(fs);
+      HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(0);
+      final int preLastRowNum = sheet.getLastRowNum();
+      logger.info("文件{},上次行数为{}", fileName, preLastRowNum);
+      for (int i = 0; i < saleAreas.size(); i++) {
+        Row row = sheet.createRow(preLastRowNum + i + 1);
+        SaleArea data = saleAreas.get(i);
+        row.createCell(0).setCellValue(preLastRowNum + i + 1);
+        row.createCell(1).setCellValue(data.getRegion());
+        row.createCell(2).setCellValue(data.getAcreage());
+        row.createCell(3).setCellValue(data.getExist());
+        row.createCell(4).setCellValue(data.getForwardDelivery());
+        row.createCell(5).setCellValue(data.getDate());
+      }
+      FileOutputStream fileOut = new FileOutputStream(fileName);
+      workbook.write(fileOut);
+      IOUtils.closeQuietly(fileOut);
+      logger.info("文件{}写入完成,{}-{}行", fileName, preLastRowNum + 1, preLastRowNum + saleAreas.size());
+    } catch (IOException e) {
+      logger.error("excel-{}处理出错", fileName, e);
+    }
+
+    return fileName;
+  }
+
+  public List<SaleArea> getSaleArea(DateTime date) {
+    List<SaleArea> list = new ArrayList<>();
+
+    Retrofit retrofit = new Retrofit.Builder()
+        .baseUrl("http://data.stats.gov.cn/").addConverterFactory(GsonConverterFactory.create())
+        .build();
+
+    SaleAreaApi api = retrofit.create(SaleAreaApi.class);
+    final String dateTime = date.toString("yyyyMM");
+    List<SaleAreaRequest> saleAreaRequests = new ArrayList<>(1);
+    saleAreaRequests.add(new SaleAreaRequest("sj", dateTime));
+    Call<StatsResult> call = api.listSaleAreas("QueryData", "AA130Q", new GsonBuilder().create().toJson(saleAreaRequests));
+    try {
+      Response<StatsResult> response = call.execute();
+      if (response.isSuccessful()) {
+        List<StatsExcel> statsExcels = response.body().getExceltable();
+        list.addAll(convert(statsExcels, dateTime));
+      }
+    } catch (IOException e) {
+      logger.error("请求失败", e);
+    }
+
+    return list;
+  }
+
+  private List<SaleArea> convert(List<StatsExcel> statsExcels, String date) {
+    statsExcels = statsExcels.subList(5, statsExcels.size());
+    List<SaleArea> saleAreas = new ArrayList<>();
+    for (int i = 0; i < statsExcels.size() / 4; i++) {
+      SaleArea tempSaleArea = new SaleArea();
+      tempSaleArea.setDate(date);
+      tempSaleArea.setRegion(statsExcels.get(i * 4).getData());
+      tempSaleArea.setAcreage(Double.valueOf(statsExcels.get(i * 4 + 1).getData()));
+      tempSaleArea.setExist(Double.valueOf(statsExcels.get(i * 4 + 2).getData()));
+      tempSaleArea.setForwardDelivery(Double.valueOf(statsExcels.get(i * 4 + 3).getData()));
+      saleAreas.add(tempSaleArea);
+    }
+    return saleAreas;
+  }
+
 
   public String saveHtml(String domain, String uri) {
     FileOutputStream out = null;
