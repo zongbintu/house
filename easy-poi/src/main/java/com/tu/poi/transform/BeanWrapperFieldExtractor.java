@@ -9,6 +9,7 @@ import org.springframework.util.Assert;
 
 /**
  * @author Tu enum@foxmail.com.
+ * @since 0.1.0
  */
 public class BeanWrapperFieldExtractor<T> implements FieldExtractor<T> {
 

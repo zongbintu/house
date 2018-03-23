@@ -1,0 +1,15 @@
+group 'com.tu.poi'
+version '0.1.0'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.apache.poi:poi:3.17'
+    compile 'org.springframework:spring-beans:5.0.4.RELEASE'
+}

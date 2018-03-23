@@ -9,27 +9,3 @@ buildscript {
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 	}
 }
-
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'org.springframework.boot'
-
-group = 'com.tu.house'
-version = '0.1.0'
-sourceCompatibility = 1.8
-
-repositories {
-	mavenCentral()
-}
-
-
-dependencies {
-	compile 'org.springframework.boot:spring-boot-starter-web'
-	compile 'org.apache.poi:poi:3.17'
-	compile 'org.jsoup:jsoup:1.11.2'
-	compile 'joda-time:joda-time:2.9.9'
-	compile 'com.squareup.retrofit2:parent:2.3.0'
-	compile 'com.squareup.retrofit2:converter-gson:2.3.0'
-	compile 'com.squareup.okhttp3:logging-interceptor:3.9.1'
-	compile 'com.google.code.gson:gson:2.8.2'
-}

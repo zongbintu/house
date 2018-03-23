@@ -7,8 +7,8 @@ import com.tu.house.model.response.BaiduResult;
 import com.tu.house.service.HouseServiceImpl;
 import com.tu.house.service.IHouseService;
 import com.tu.house.service.MapBaiduServiceImpl;
+import com.tu.poi.PoiWriter;
 import com.tu.poi.transform.BeanWrapperFieldExtractor;
-import com.tu.poi.transform.PoiWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,8 +34,8 @@ public class JavaApplication {
 //    houseService.getSaleArea("201702","201712");
 
     try {
-      File templateFile = new File("src/main/resources/static/baby_map.xls");
-      File targetFile = new File("src/main/resources/static/baby_map" + System.currentTimeMillis() + ".xls");
+      File templateFile = new File("templates/baby_map.xls");
+      File targetFile = new File("templates/baby_map" + System.currentTimeMillis() + ".xls");
       Path targetFilePath = Files.copy(templateFile.toPath(), targetFile.toPath());
 
       BeanWrapperFieldExtractor extractor = new BeanWrapperFieldExtractor();
@@ -46,19 +46,21 @@ public class JavaApplication {
 
       String[] areas = new String[]{"沙坪坝区", "渝北区", "重庆市江北区", "渝中区", "九龙坡区", "南岸区", "北碚区", "大渡口区"};
 
+      String keyword = "母婴";
+
       for (String area : areas) {
 
         List<Poi> poiList = new ArrayList<>();
 
         int pageNum = 0;
-        BaiduResult<List<Poi>> result = baiduService.poi(Constants.MAP_AK, Constants.MAP_SK, "母婴", area, 0);
+        BaiduResult<List<Poi>> result = baiduService.poi(Constants.MAP_AK, Constants.MAP_SK, keyword, area, 0);
         while (true) {
           if (result.getStatus() == ResponseStatusEnum.OK.getCode()) {
             if (!ObjectUtils.isEmpty(result.getResults())) {
               poiList.addAll(result.getResults());
             }
             if (result.getTotal() > 0) {
-              result = baiduService.poi(Constants.MAP_AK, Constants.MAP_SK, "母婴", area, ++pageNum);
+              result = baiduService.poi(Constants.MAP_AK, Constants.MAP_SK, keyword, area, ++pageNum);
             } else {
               break;
             }
@@ -67,7 +69,7 @@ public class JavaApplication {
         logger.info("result:{}", poiList);
 
         if (!ObjectUtils.isEmpty(poiList)) {
-          writer.write(baiduService.convertPoi(poiList, area));
+          writer.writeExcel(baiduService.convertPoi(poiList, area));
         }
       }
     } catch (IOException e) {
