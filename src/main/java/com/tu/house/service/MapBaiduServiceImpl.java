@@ -4,25 +4,20 @@ import com.tu.house.api.MapBaiduApi;
 import com.tu.house.common.baidu.ResponseStatusEnum;
 import com.tu.house.map.baidu.SnCal;
 import com.tu.house.model.Poi;
+import com.tu.house.model.dto.PoiDto;
 import com.tu.house.model.response.BaiduResult;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.ObjectUtils;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -74,11 +69,7 @@ public class MapBaiduServiceImpl {
     try {
       Response<BaiduResult<List<Poi>>> response = call.execute();
       if (response.isSuccessful()) {
-        BaiduResult<List<Poi>> body = response.body();
-        if (ResponseStatusEnum.OK.getCode() == body.getStatus() && !ObjectUtils.isEmpty(body.getResults())) {
-          writeExcel("src/main/resources/static/baby_map.xls", body.getResults());
-        }
-        return body;
+        return response.body();
       }
     } catch (IOException e) {
       logger.error("请求失败", e);
@@ -86,54 +77,43 @@ public class MapBaiduServiceImpl {
     return result;
   }
 
-
-  public String writeExcel(String fileName, List<Poi> poiList) {
-    logger.info("文件{}开始写入", fileName);
-    try (POIFSFileSystem fs = new POIFSFileSystem(new FileInputStream(fileName))) {
-      Workbook workbook = new HSSFWorkbook(fs);
-      HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(0);
-      final int preLastRowNum = sheet.getLastRowNum();
-      logger.info("文件{},上次行数为{}", fileName, preLastRowNum);
-      int index = 0;
-      for (int i = 0; i < poiList.size(); i++) {
-        Poi poi = poiList.get(i);
-        if ("母婴室".equals(poi.getName())) {
+  public List<PoiDto> convertPoi(List<Poi> poiList, String area) {
+    List<PoiDto> data = new ArrayList<>();
+    if (!ObjectUtils.isEmpty(poiList)) {
+      for (Poi poi : poiList) {
+        PoiDto dto = new PoiDto();
+        BeanUtils.copyProperties(poi, dto);
+        String brandMark = brandMark(dto.getName());
+        if (null == brandMark) {
           continue;
         }
-        index++;
-        Row row = sheet.createRow(preLastRowNum + index);
-        row.createCell(0).setCellValue(preLastRowNum + index);
-        row.createCell(1).setCellValue(poi.getName());
-        row.createCell(2).setCellValue(poi.getProvince());
-        row.createCell(3).setCellValue(poi.getCity());
-        row.createCell(4).setCellValue(poi.getArea());
-        row.createCell(5).setCellValue(poi.getAddress());
-        row.createCell(6).setCellValue(poi.getTelephone());
-        row.createCell(7).setCellValue(poi.getLocation().getLng());
-        row.createCell(8).setCellValue(poi.getLocation().getLat());
-        row.createCell(9).setCellValue(poi.getDetail());
-        row.createCell(10).setCellValue(poi.getUid());
-        row.createCell(11).setCellValue(trueName(poi.getName()));
-      }
-      FileOutputStream fileOut = new FileOutputStream(fileName);
-      workbook.write(fileOut);
-      IOUtils.closeQuietly(fileOut);
-      logger.info("文件{}写入完成,{}-{}行", fileName, preLastRowNum + 1, preLastRowNum + index + 1);
-    } catch (IOException e) {
-      logger.error("excel-{}处理出错", fileName, e);
-    }
+        dto.setBrandMark(brandMark);
+        dto.setLat(null != poi.getLocation() ? poi.getLocation().getLat() : null);
+        dto.setLng(null != poi.getLocation() ? poi.getLocation().getLng() : null);
 
-    return fileName;
+        dto.setArea(null == area ? dto.getArea() : area);
+        data.add(dto);
+      }
+    }
+    return data;
   }
 
   /**
    * 数据清洗
    */
-  private String trueName(String name) {
+  private String brandMark(String name) {
+    List<String> notBaby = new ArrayList<>();
+    notBaby.add("母婴室");
+    notBaby.add("母婴哺乳室");
+    notBaby.add("育婴哺乳室");
+
+    if (notBaby.contains(name)) {
+      return null;
+    }
     String[] keywords = {"爱亲", "孕婴世界", "中亿孕婴", "孩子王"
-        , "孕婴坊", "圣婴孕婴", "可爱可亲", "宝妈时光"
-        , "欧比母婴", "宝贝爱", "妈咪爱", "贝乐母婴", "孕婴房", "母婴坊", "囝囡孕婴", "孕婴之家", "喜来宝", "浩贝母婴", "天乐孕婴", "婴点母婴", "好孩子孕婴"
-        , "贝乐家", "爱贝尚", "宝贝计划", "爱婴堂", "天乐孕婴", "婴点"};
+        , "孕婴坊", "圣婴孕婴", "可爱可亲", "宝妈时光", "佳婴母婴"
+        , "欧比母婴", "宝贝爱", "妈咪爱", "贝乐母婴", "孕婴房", "母婴坊", "囝囡孕婴", "孕婴之家", "喜来宝", "浩贝母婴", "天乐孕婴", "婴点母婴", "好孩子孕婴", "登康·好儿尚", "安妮宝贝", "宝宝乐母婴"
+        , "贝乐家", "爱贝尚母婴", "宝贝计划", "爱婴堂", "天乐孕婴", "婴点", "妈咪宝贝", "全棉时代"};
     for (String keyword : keywords) {
       if (name.contains(keyword)) {
         return keyword;
