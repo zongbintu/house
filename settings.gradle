@@ -2,3 +2,4 @@ rootProject.name = 'house'
 
 include 'house-main'
 include 'easy-poi'
+include 'easy-network'

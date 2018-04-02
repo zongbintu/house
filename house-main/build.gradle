@@ -27,10 +27,8 @@ dependencies {
 	compile 'org.springframework.boot:spring-boot-starter-web'
 	compile 'org.jsoup:jsoup:1.11.2'
 	compile 'joda-time:joda-time:2.9.9'
-	compile 'com.squareup.retrofit2:parent:2.3.0'
-	compile 'com.squareup.retrofit2:converter-gson:2.3.0'
-	compile 'com.squareup.okhttp3:logging-interceptor:3.9.1'
 	compile 'com.google.code.gson:gson:2.8.2'
 
 	compile project(':easy-poi')
+	compile project(':easy-network')
 }

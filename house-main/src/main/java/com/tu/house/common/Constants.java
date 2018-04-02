@@ -10,6 +10,6 @@ public class Constants {
   public static final String ERSHOUFANG_DAZHULIN = "/ershoufang/dazhulin/";
 
 
-  public static final String MAP_AK = "yourak";
-  public static final String MAP_SK = "yoursk";
+  public static final String MAP_AK = "1WGRy3qPjwL2cspBHT7VM8rsGANMrE03";
+  public static final String MAP_SK = "MfMPubdVBDPrq4UVqoMNZGKxsq2o5Oy1";
 }

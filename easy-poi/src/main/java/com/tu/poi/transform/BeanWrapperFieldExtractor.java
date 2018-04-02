@@ -27,11 +27,11 @@ public class BeanWrapperFieldExtractor<T> implements FieldExtractor<T> {
   public Object[] extract(T item) {
     Assert.notNull(names, "Names must be non-null");
     Assert.notNull(item, "item must be non-null");
-    List<Object> values = new ArrayList<Object>();
+    List<Object> values = new ArrayList<>();
 
     BeanWrapper bw = new BeanWrapperImpl(item);
     for (String propertyName : this.names) {
-      values.add(bw.getPropertyValue(propertyName));
+      values.add(null == propertyName || "".equals(propertyName) ? "" : bw.getPropertyValue(propertyName));
     }
     return values.toArray();
   }

@@ -5,6 +5,7 @@ import com.tu.house.api.SaleAreaApi;
 import com.tu.house.common.Constants;
 import com.tu.house.model.House;
 import com.tu.house.model.SaleArea;
+import com.tu.house.model.Village;
 import com.tu.house.model.request.SaleAreaRequest;
 import com.tu.house.model.response.StatsExcel;
 import com.tu.house.model.response.StatsResult;
@@ -43,13 +44,46 @@ public class HouseServiceImpl implements IHouseService {
 
   @Override
   public String getHouse(String... args) {
-    for (int i = 1; i <= 16; i++) {
-      String fileName = saveHtml(Constants.URL_LIANJIA, "/ershoufang/renhe/pg" + i + "/");
+    for (int i = 1; i <= 22; i++) {
+      String fileName = saveHtml(Constants.URL_LIANJIA, "/ershoufang/renhe/pg" + i + "/", "house");
       List<House> houses = parseHtml(fileName);
       writeExcel("src/main/resources/static/lianjia.xls", houses);
     }
 
     return null;
+  }
+
+  public String getXiaoqu() {
+    String dir = String.valueOf(System.currentTimeMillis());
+    for (int i = 1; i <= 16; i++) {
+      String fileName = saveHtml(Constants.URL_LIANJIA, "/xiaoqu/shapingba/pg" + i + "/", dir);
+//      List<Village> villages = parseVillageHtml(fileName);
+//      writeExcel("src/main/resources/static/lianjia.xls", villages);
+    }
+
+    return null;
+  }
+
+  public List<Village> paseXiaoqu(String dir) {
+    File villageDir = new File(dir);
+    List<String> urls = new ArrayList<>();
+    if (villageDir.exists()) {
+      for (File file : villageDir.listFiles()
+          ) {
+        urls.addAll(parseVillageHtml(file.getPath()));
+      }
+
+    }
+    return getVillageDetail(urls);
+  }
+
+  public List<Village> getVillageDetail(List<String> urls) {
+    List<Village> details = new ArrayList<>(urls.size());
+    for (String url : urls
+        ) {
+      details.add(parseVillageDetail(url));
+    }
+    return details;
   }
 
   @Override
@@ -135,9 +169,9 @@ public class HouseServiceImpl implements IHouseService {
   }
 
 
-  public String saveHtml(String domain, String uri) {
+  public String saveHtml(String domain, String uri, String dir) {
     FileOutputStream out = null;
-    File dest = new File("src/temp_html/" + (uri.endsWith("/") ? uri.substring(0, uri.length() - 1) : uri) + ".html");
+    File dest = new File("src/temp_html/" + dir + "/" + (uri.endsWith("/") ? uri.substring(0, uri.length() - 1) : uri) + ".html");
     try {
       Document document = Jsoup.connect(domain + uri)
           .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
@@ -163,6 +197,92 @@ public class HouseServiceImpl implements IHouseService {
     }
 
     return dest.getPath();
+  }
+
+  public List<String> parseVillageHtml(String fileName) {
+    List<String> urls = new ArrayList<>();
+    //读取本地html的路径
+    File file = new File(fileName);
+    //写个循环读取这些文件的名字
+    try {
+      if (file.isFile()) {
+        logger.info("文件{}开始解析", fileName);
+
+        //下面开始解析本地的html
+        Document doc = Jsoup.parse(file, "UTF-8");
+        Elements listContents = doc.select("ul.listContent");
+        if (!ObjectUtils.isEmpty(listContents)) {
+          Element listContent = listContents.first();
+          Elements infoContents = listContent.select("div.info");
+          if (!ObjectUtils.isEmpty(infoContents)) {
+            for (int i = 0; i < infoContents.size(); i++) {
+
+              Element infoElement = infoContents.get(i);
+              Element titleElement = infoElement.select("div.title").first().select("a[href]").first();
+              String url = titleElement.attr("href");
+              urls.add(url);
+              logger.info("解析第{}个元素，结果为：{}", i, url);
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("文件{}解析错误", fileName, e);
+    }
+    return urls;
+  }
+
+  public Village parseVillageDetail(String url) {
+    Village village = new Village();
+    //写个循环读取这些文件的名字
+    try {
+      logger.info("开始解析{}", url);
+
+      Document doc = Jsoup.connect(url)
+          .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+          .timeout(30000).get();
+
+      village.setUrl(url);
+
+      Element bredElement = doc.selectFirst("div.xiaoquDetailbreadCrumbs").selectFirst("div.fl");
+      Elements districtElements = bredElement.select("a[href]");
+      if (null != districtElements && districtElements.size() >= 4) {
+        village.setCity(districtElements.get(1).text().replace("小区", ""));
+        village.setDistrict(districtElements.get(2).text().replace("小区", ""));
+        village.setStreet(districtElements.get(3).text().replace("小区", ""));
+      }
+
+      Element headerElement = doc.selectFirst("div.detailHeader");
+      village.setTitle(headerElement.selectFirst("h1.detailTitle").text());
+      village.setAddress(headerElement.selectFirst("div.detailDesc").text());
+
+      Element desElement = doc.select("div.xiaoquDescribe").first();
+
+      Element priceElement = desElement.selectFirst("span.xiaoquUnitPrice");
+      village.setPrice(null == priceElement ? "0" : desElement.selectFirst("span.xiaoquUnitPrice").text());
+      Elements infoElements = desElement.select("div.xiaoquInfoItem");
+      if (null != infoElements && infoElements.size() >= 7) {
+        String age = "";
+        try {
+          age = infoElements.get(0).selectFirst("span.xiaoquInfoContent").text().replace("年建成", "");
+          village.setAge(Integer.parseInt(age));
+        } catch (NumberFormatException e) {
+          logger.info("建筑年代\"{}\"解析错误", age);
+        }
+        village.setBuildType(infoElements.get(1).selectFirst("span.xiaoquInfoContent").text());
+        village.setPropertyCost(infoElements.get(2).selectFirst("span.xiaoquInfoContent").text());
+        village.setProperty(infoElements.get(3).selectFirst("span.xiaoquInfoContent").text());
+        village.setBuilder(infoElements.get(4).selectFirst("span.xiaoquInfoContent").text());
+        village.setBuildCount(Integer.valueOf(infoElements.get(5).selectFirst("span.xiaoquInfoContent").text().replace("栋", "")));
+        village.setDoorCount(Integer.valueOf(infoElements.get(6).selectFirst("span.xiaoquInfoContent").text().replace("户", "")));
+
+      }
+
+      return village;
+    } catch (Exception e) {
+      logger.error("解析{}错误", url, e);
+    }
+    return null;
   }
 
   public List<House> parseHtml(String fileName) {
