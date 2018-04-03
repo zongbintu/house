@@ -45,7 +45,7 @@ public class JavaApplication {
     try {
       Path targetFilePath = Files.copy(templateFile.toPath(), targetFile.toPath());
       PoiWriter writer = new PoiWriter(targetFilePath.toString(), extractor);
-      writer.writeExcel(villages);
+      writer.write(villages);
     } catch (IOException e) {
       e.printStackTrace();
     }

@@ -1,5 +1,5 @@
 group 'com.tu.poi'
-version '0.1.0'
+version '0.2.0'
 
 apply plugin: 'java'
 
@@ -11,5 +11,6 @@ repositories {
 
 dependencies {
     compile 'org.apache.poi:poi:3.17'
+    compile 'org.apache.poi:poi-ooxml:3.17'
     compile 'org.springframework:spring-beans:5.0.4.RELEASE'
 }
