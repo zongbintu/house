@@ -16,11 +16,7 @@ public enum MSTypeEnum {
   }
 
   public static MSTypeEnum fromCode(String code) {
-    String cleanedCode = (code == null ? null : code.toUpperCase());
-
-    if (cleanedCode == null || cleanedCode.length() != 2) {
-      return null;
-    }
+    String cleanedCode = (code == null ? null : code.toLowerCase());
 
     for (MSTypeEnum country : values()) {
       if (country.getCode().equals(cleanedCode)) {

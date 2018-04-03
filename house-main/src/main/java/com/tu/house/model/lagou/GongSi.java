@@ -148,4 +148,24 @@ public class GongSi {
   public void setCityScore(int cityScore) {
     this.cityScore = cityScore;
   }
+
+  @Override
+  public String toString() {
+    return "GongSi{" +
+        "companyId=" + companyId +
+        ", companyFullName='" + companyFullName + '\'' +
+        ", companyShortName='" + companyShortName + '\'' +
+        ", companyLogo='" + companyLogo + '\'' +
+        ", city='" + city + '\'' +
+        ", industryField='" + industryField + '\'' +
+        ", companyFeatures='" + companyFeatures + '\'' +
+        ", financeStage='" + financeStage + '\'' +
+        ", interviewRemarkNum=" + interviewRemarkNum +
+        ", positionNum=" + positionNum +
+        ", processRate=" + processRate +
+        ", approve=" + approve +
+        ", countryScore=" + countryScore +
+        ", cityScore=" + cityScore +
+        '}';
+  }
 }

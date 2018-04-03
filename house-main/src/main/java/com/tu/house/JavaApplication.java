@@ -7,6 +7,8 @@ import com.tu.house.model.Village;
 import com.tu.house.model.response.BaiduResult;
 import com.tu.house.service.HouseServiceImpl;
 import com.tu.house.service.IHouseService;
+import com.tu.house.service.LagouService;
+import com.tu.house.service.LagouServiceImpl;
 import com.tu.house.service.MapBaiduServiceImpl;
 import com.tu.poi.PoiWriter;
 import com.tu.poi.transform.BeanWrapperFieldExtractor;
@@ -33,24 +35,6 @@ public class JavaApplication {
 //    houseService.getHouse();
 
 //    houseService.getSaleArea("201702","201712");
-
-    List<Village> villages = new HouseServiceImpl().paseXiaoqu("src/temp_html/1522373793123/xiaoqu/shapingba/");
-    System.out.println(villages);
-
-    BeanWrapperFieldExtractor extractor = new BeanWrapperFieldExtractor();
-    extractor.setNames(new String[]{"title", "price", "age", "buildType", "buildCount", "doorCount", "district", null, "propertyCost", "", "","","address","url"});
-
-    File templateFile = new File("templates/lianjia_xiaoqu_template.xls");
-    File targetFile = new File("templates/lianjia_xiaoqu_" + System.currentTimeMillis() + ".xls");
-    try {
-      Path targetFilePath = Files.copy(templateFile.toPath(), targetFile.toPath());
-      PoiWriter writer = new PoiWriter(targetFilePath.toString(), extractor);
-      writer.write(villages);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
-//    new HouseServiceImpl().parseVillageDetail("https://cq.lianjia.com/xiaoqu/3611058219010/");
 
 //    try {
 //      File templateFile = new File("templates/baby_map.xls");
@@ -94,6 +78,9 @@ public class JavaApplication {
 //    } catch (IOException e) {
 //      e.printStackTrace();
 //    }
+
+    LagouService lagouService = new LagouServiceImpl();
+    lagouService.companies("user_trace_token=20171103153545-9ac04ec7-c069-11e7-9704-5254005c3644; LGUID=20171103153545-9ac05222-c069-11e7-9704-5254005c3644; _ga=GA1.2.1192990198.1509694546; index_location_city=%E5%85%A8%E5%9B%BD; JSESSIONID=ABAAABAABEEAAJAB0D71992925D3D7F0A9DEFA68F0948D9; Hm_lvt_4233e74dff0ae5bd0a3d81c6ccf756e6=1520560137,1521186320,1522050245,1522636160; _gid=GA1.2.1709160403.1522749141; TG-TRACK-CODE=index_company; Hm_lpvt_4233e74dff0ae5bd0a3d81c6ccf756e6=1522749148; LGRID=20180403175227-b7b08b1f-3724-11e8-b275-525400f775ce");
 
   }
 }

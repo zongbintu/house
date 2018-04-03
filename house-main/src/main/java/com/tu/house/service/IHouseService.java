@@ -5,10 +5,18 @@ package com.tu.house.service;
  */
 public interface IHouseService {
 
+  /**
+   * 获取链家房子信息
+   */
   String getHouse(String... args);
 
   /**
-   * 销售面积
+   * 国家统计数据  销售面积
    */
   String getSaleArea(String startDate, String endDate);
+
+  /**
+   * 获取链家小区信息
+   */
+  String getVillage();
 }

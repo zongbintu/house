@@ -9,10 +9,14 @@ import com.tu.house.model.Village;
 import com.tu.house.model.request.SaleAreaRequest;
 import com.tu.house.model.response.StatsExcel;
 import com.tu.house.model.response.StatsResult;
+import com.tu.poi.PoiWriter;
+import com.tu.poi.transform.BeanWrapperFieldExtractor;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -53,12 +57,32 @@ public class HouseServiceImpl implements IHouseService {
     return null;
   }
 
+  @Override
+  public String getVillage() {
+    List<Village> villages = new HouseServiceImpl().paseXiaoqu("src/temp_html/1522373793123/xiaoqu/shapingba/");
+
+    BeanWrapperFieldExtractor extractor = new BeanWrapperFieldExtractor();
+    extractor.setNames(
+        new String[]{"title", "price", "age", "buildType", "buildCount", "doorCount", "district", null, "propertyCost", "", "", "", "address",
+            "url"});
+
+    File templateFile = new File("templates/lianjia_xiaoqu_template.xls");
+    File targetFile = new File("templates/lianjia_xiaoqu_" + System.currentTimeMillis() + ".xls");
+    try {
+      Path targetFilePath = Files.copy(templateFile.toPath(), targetFile.toPath());
+      PoiWriter writer = new PoiWriter(targetFilePath.toString(), extractor);
+      writer.write(villages);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+
   public String getXiaoqu() {
     String dir = String.valueOf(System.currentTimeMillis());
     for (int i = 1; i <= 16; i++) {
-      String fileName = saveHtml(Constants.URL_LIANJIA, "/xiaoqu/shapingba/pg" + i + "/", dir);
-//      List<Village> villages = parseVillageHtml(fileName);
-//      writeExcel("src/main/resources/static/lianjia.xls", villages);
+      saveHtml(Constants.URL_LIANJIA, "/xiaoqu/shapingba/pg" + i + "/", dir);
     }
 
     return null;

@@ -16,6 +16,7 @@ import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -60,7 +61,7 @@ public class PoiWriter {
         List list = (List) data;
         try (FileInputStream fs = new FileInputStream(fileName)) {
           workbook = XLS == msTypeEnum ? new HSSFWorkbook(fs) : new XSSFWorkbook(fs);
-          HSSFSheet sheet = (HSSFSheet) workbook.getSheetAt(0);
+          Sheet sheet =  workbook.getSheetAt(0);
           final int preLastRowNum = append ? sheet.getLastRowNum() : 0;
           int index = 0;
           for (int i = 0; i < list.size(); i++) {
